@@ -1,98 +1,16 @@
 <!DOCTYPE html>
-<html lang="vi" class="h-full">
+<html lang="vi" :class="darkMode ? 'dark' : ''">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HRM Smart Schedule - Quản lý lịch trực</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Alpine.js -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-</head>
-<body class="h-full bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans" x-data="hrmApp()">
-
-    <div class="min-h-full flex flex-col">
-        <!-- Header -->
-        <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center shadow-sm">
-            <div class="flex items-center space-x-3">
-                <div class="bg-indigo-600 text-white p-2 rounded-xl">
-                    <i class="fa-solid fa-calendar-days text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-tight">HRM Smart Schedule</h1>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Hệ thống phân ca trực thông minh & đồng bộ Realtime</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-4">
-                <span class="text-sm bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-lg font-medium">
-                    <i class="fa-solid fa-user-shield mr-1"></i> Quản trị viên (Admin)
-                </span>
-            </div>
-        </header>
-
-        <!-- Main Content -->
-        <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
-            
-            <!-- Khu vực bảng quản lý hoặc trạng thái chính -->
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-                <h2 class="text-lg font-semibold mb-2">Trạng thái đồng bộ dữ liệu</h2>
-                <p class="text-sm text-green-600 dark:text-green-400 font-medium">
-                    <i class="fa-solid fa-circle-check mr-1"></i> Đã kết nối Firebase Realtime Database (Dự án: ngochao-90782). Mọi thay đổi sẽ tự động đồng bộ giữa máy A và máy B ngay lập tức.
-                </p>
-            </div>
-
-            <!-- Khung Nhật ký hệ thống (Audit Log) -->
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
-                        <i class="fa-solid fa-clock-rotate-left mr-2 text-indigo-500"></i> Nhật ký thao tác hệ thống (Audit Log)
-                    </h3>
-                    <button @click="clearLogs()" class="text-xs text-red-500 hover:underline">
-                        Xóa lịch sử
-                    </button>
-                </div>
-
-                <div class="overflow-x-auto max-h-96 overflow-y-auto">
-                    <table class="w-full text-left border-collapse text-sm">
-                        <thead>
-                            <tr class="border-b border-gray-100 dark:border-gray-700 text-gray-400 font-medium">
-                                <th class="py-2 px-3">Thời gian</th>
-                                <th class="py-2 px-3">Người thực hiện</th>
-                                <th class="py-2 px-3">Hành động</th>
-                                <th class="py-2 px-3">Chi tiết</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-50 dark:divide-gray-700/50">
-                            <template x-for="log in auditLogs" :key="log.id">
-                                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-700/20">
-                                    <td class="py-2.5 px-3 text-gray-500 dark:text-gray-400 whitespace-nowrap" x-text="log.time"></td>
-                                    <td class="py-2.5 px-3 font-medium text-gray-800 dark:text-gray-200" x-text="log.user"></td>
-                                    <td class="py-2.5 px-3">
-                                        <span class="px-2 py-1 text-xs rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-medium" x-text="log.action"></span>
-                                    </td>
-                                    <td class="py-2.5 px-3 text-gray-600 dark:text-gray-300" x-text="log.details"></td>
-                                </tr>
-                            </template>
-                            <template x-if="auditLogs.length === 0">
-                                <tr>
-                                    <td colspan="4" class="text-center py-8 text-gray-400">Chưa có lịch sử thao tác nào được ghi nhận trên hệ thống.</td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-        </main>
-    </div>
-
-    <!-- Firebase SDK & Alpine Logic -->
+    
+    <!-- Firebase App & Database (Modular SDK) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+        // Cấu hình từ dự án Firebase của bạn
         const firebaseConfig = {
             apiKey: "AIzaSyCqsv8xo0KsAyM-TYIE58jqVvS2JPAeMk",
             authDomain: "ngochao-90782.firebaseapp.com",
@@ -104,62 +22,992 @@
             measurementId: "G-T8YGX6ZW0D"
         };
 
+        // Khởi tạo Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Khai báo ứng dụng Alpine.js
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('hrmApp', () => ({
-                staffs: [],
-                shifts: {},
-                auditLogs: [],
-                currentUser: { name: 'Quản trị viên' },
+        // Gắn vào window để Alpine.js gọi được
+        window.db = db;
+        window.fbRef = ref;
+        window.fbSet = set;
+        window.fbOnValue = onValue;
+        window.fbUpdate = update;
+    </script>[cite: 2]
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 font-sans transition-colors duration-200" x-data="hrmApp()">
+
+    <!-- MÀN HÌNH ĐĂNG NHẬP -->
+    <div x-show="!isLoggedIn" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-cloak>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100 dark:border-gray-700">
+            <div class="bg-indigo-600 px-6 py-8 text-center text-white">
+                <div class="w-14 h-14 bg-white/10 rounded-2xl mx-auto flex items-center justify-center text-2xl mb-3">
+                    <i class="fa-solid fa-users-gear"></i>
+                </div>
+                <h2 class="text-2xl font-bold">HRM Smart Schedule</h2>
+                <p class="text-indigo-200 text-sm mt-1">Hệ thống quản lý và đăng ký lịch trực ca</p>
+            </div>
+            
+            <div class="p-8 space-y-5">
+                <template x-if="loginError">
+                    <div class="bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-sm p-3 rounded-lg border border-rose-200 dark:border-rose-800 text-center font-medium" x-text="loginError"></div>
+                </template>
+
+                <!-- Form Nhân viên -->
+                <form x-show="loginType === 'staff'" @submit.prevent="handleStaffLogin" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Chọn tên nhân viên</label>
+                        <select x-model="selectedStaffName" required class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">-- Chọn tên của bạn --</option>
+                            <template x-for="emp in employees" :key="emp.id">
+                                <option :value="emp.name" x-text="emp.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition shadow-sm">
+                        Vào Đăng Ký Lịch Trực
+                    </button>
+                    <div class="text-xs text-gray-400 text-center">Chọn tên của bạn để vào đăng ký ca trực cá nhân</div>
+                </form>
+
+                <!-- Form Admin -->
+                <form x-show="loginType === 'admin'" @submit.prevent="handleAdminLogin" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tên đăng nhập Quản trị</label>
+                        <input type="text" x-model="adminForm.username" required placeholder="admin" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mật khẩu</label>
+                        <input type="password" x-model="adminForm.password" required placeholder="admin123" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 rounded-lg transition shadow-sm">
+                        Đăng Nhập Quản Trị Viên
+                    </button>
+                    <div class="text-xs text-gray-400 text-center">Mặc định: admin / admin123</div>
+                </form>
+
+                <div class="pt-4 border-t border-gray-100 dark:border-gray-700 text-center">
+                    <template x-if="loginType === 'staff'">
+                        <button @click="loginType = 'admin'; loginError = ''" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium inline-flex items-center gap-1.5">
+                            <i class="fa-solid fa-lock text-[10px]"></i> Bạn là Quản trị viên? Đăng nhập tại đây
+                        </button>
+                    </template>
+                    <template x-if="loginType === 'admin'">
+                        <button @click="loginType = 'staff'; loginError = ''" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium inline-flex items-center gap-1.5">
+                            <i class="fa-solid fa-arrow-left text-[10px]"></i> Quay lại chọn tên nhân viên
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GIAO DIỆN CHÍNH -->
+    <div x-show="isLoggedIn" class="min-h-screen flex flex-col" x-cloak>
+        <header class="bg-white dark:bg-gray-800 shadow-sm px-6 py-4 flex justify-between items-center border-b dark:border-gray-700 transition-colors">
+            <div class="flex items-center gap-3">
+                <span class="text-xl font-bold text-gray-800 dark:text-white">HRM Smart Schedule</span>
+                <span class="text-xs px-2.5 py-1 rounded-full font-medium" :class="role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'" x-text="role === 'admin' ? 'Quyền: Quản trị viên' : 'Quyền: Nhân viên'"></span>
+            </div>
+            <div class="flex items-center gap-4 text-sm">
+                <button @click="toggleDarkMode()" class="w-9 h-9 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-yellow-400 rounded-full flex items-center justify-center transition" title="Chuyển đổi giao diện Sáng / Tối">
+                    <i :class="darkMode ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
+                </button>
+                <span class="text-gray-600 dark:text-gray-300 font-medium">Xin chào, <strong class="text-indigo-600 dark:text-indigo-400" x-text="currentUser"></strong></span>
+                <button @click="logout()" class="text-rose-600 dark:text-rose-400 hover:underline font-medium">Thoát</button>
+            </div>
+        </header>
+
+        <main class="p-6 max-w-full overflow-x-auto flex-1 space-y-6">
+            
+            <!-- THANH ĐIỀU HƯỚNG TUẦN & TRẠNG THÁI -->
+            <div x-show="currentView !== 'monthly'" class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-4 transition-colors">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-lg flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-calendar-days"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-400 uppercase font-bold tracking-wider">Thời gian biểu</span>
+                            <template x-if="isCurrentWeekLocked()">
+                                <span class="bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                    <i class="fa-solid fa-lock text-[9px]"></i> Đã khóa đăng ký
+                                </span>
+                            </template>
+                            <template x-if="!isCurrentWeekLocked()">
+                                <span class="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                    <i class="fa-solid fa-lock-open text-[9px]"></i> Đang mở đăng ký
+                                </span>
+                            </template>
+                        </div>
+                        <div class="text-base font-bold text-gray-800 dark:text-white" x-text="getWeekDisplayString()"></div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button @click="changeWeek(-1)" class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-3.5 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-chevron-left text-xs"></i> Tuần trước
+                    </button>
+                    <button @click="resetToCurrentWeek()" class="bg-indigo-50 dark:bg-indigo-900/40 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 px-3.5 py-2 rounded-lg text-sm font-semibold transition">
+                        Tuần hiện tại
+                    </button>
+                    <button @click="changeWeek(1)" class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-3.5 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                        Tuần sau <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </button>
+
+                    <template x-if="role === 'admin'">
+                        <button @click="toggleLockWeek()" :class="isCurrentWeekLocked() ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 text-white'" class="px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-sm ml-2">
+                            <i :class="isCurrentWeekLocked() ? 'fa-solid fa-lock-open' : 'fa-solid fa-lock'"></i> 
+                            <span x-text="isCurrentWeekLocked() ? 'Mở khóa tuần' : 'Khóa tuần này'"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- THANH CHUYỂN ĐỔI CHẾ ĐỘ XEM -->
+            <div class="flex border-b border-gray-200 dark:border-gray-700 gap-6">
+                <template x-if="role === 'admin'">
+                    <div class="flex gap-6">
+                        <button @click="currentView = 'table'" :class="currentView === 'table' ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700'" class="pb-3 border-b-2 font-bold text-sm transition flex items-center gap-2">
+                            <i class="fa-solid fa-table-cells"></i> Bảng Lịch Tuần Tổng Hợp
+                        </button>
+                        <button @click="currentView = 'timeline'" :class="currentView === 'timeline' ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700'" class="pb-3 border-b-2 font-bold text-sm transition flex items-center gap-2">
+                            <i class="fa-solid fa-clock"></i> Xem Lịch Theo Ngày (Timeline Ca)
+                        </button>
+                        <button @click="currentView = 'monthly'" :class="currentView === 'monthly' ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700'" class="pb-3 border-b-2 font-bold text-sm transition flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie"></i> Thống Kê Tổng Ca Theo Tháng
+                        </button>
+                    </div>
+                </template>
+
+                <template x-if="role === 'staff'">
+                    <div class="flex gap-6">
+                        <button @click="currentView = 'staffregister'" :class="currentView === 'staffregister' ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700'" class="pb-3 border-b-2 font-bold text-sm transition flex items-center gap-2">
+                            <i class="fa-solid fa-pen-to-square"></i> Đăng Ký / Chỉnh Sửa Ca Của Tôi
+                        </button>
+                        <button @click="currentView = 'timeline'" :class="currentView === 'timeline' ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700'" class="pb-3 border-b-2 font-bold text-sm transition flex items-center gap-2">
+                            <i class="fa-solid fa-clock"></i> Xem Timeline Ngày Chung
+                        </button>
+                    </div>
+                </template>
+            </div>
+
+            <!-- CHẾ ĐỘ: BẢNG TUẦN TỔNG HỢP -->
+            <div x-show="role === 'admin' && currentView === 'table'" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Tổng nhân viên</p>
+                            <h4 class="text-2xl font-bold text-gray-800 dark:text-white mt-1" x-text="employees.length"></h4>
+                        </div>
+                        <div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-lg flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Tổng ca tuần này</p>
+                            <h4 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1" x-text="getTotalAssignedShifts()"></h4>
+                        </div>
+                        <div class="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-lg flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Ngày cao điểm nhất</p>
+                            <h4 class="text-lg font-bold text-amber-600 dark:text-amber-400 mt-1" x-text="getPeakDayName()"></h4>
+                        </div>
+                        <div class="w-10 h-10 bg-amber-50 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-lg flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Cấu hình hệ thống</p>
+                            <button @click="showPasswordModal = true" class="mt-1 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-lg transition font-medium">
+                                <i class="fa-solid fa-key mr-1"></i> Đổi mật khẩu
+                            </button>
+                        </div>
+                        <div class="w-10 h-10 bg-purple-50 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 rounded-lg flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-t-xl shadow-sm border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-3 items-center justify-between transition-colors">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="flex items-center gap-2">
+                            <input type="text" x-model="newEmpName" placeholder="Họ Tên nhân viên mới..." class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-52">
+                            <button @click="addEmployee()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-sm">
+                                <i class="fa-solid fa-plus"></i> Thêm
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-search text-xs"></i></span>
+                            <input type="text" x-model="searchKeyword" placeholder="Tìm tên nhân viên..." class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-48">
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <button @click="exportWeeklyReportWord()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2 shadow-sm">
+                            <i class="fa-solid fa-file-word"></i> Xuất File Word Cả Tuần
+                        </button>
+                        <button @click="clearAllShifts()" class="bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 px-4 py-2 rounded-lg text-sm font-medium transition">
+                            Xóa toàn bộ ca
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-b-xl shadow-sm overflow-x-auto transition-colors">
+                    <table class="w-full text-left border-collapse min-w-[1200px]">
+                        <thead>
+                            <tr class="bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 text-xs font-bold uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
+                                <th class="py-3 px-4 border-r border-gray-200 dark:border-gray-700 w-48">NHÂN VIÊN</th>
+                                <template x-for="day in days" :key="day.key">
+                                    <th class="py-3 px-3 border-r border-gray-200 dark:border-gray-700 text-center" x-text="day.name"></th>
+                                </template>
+                                <th class="py-3 px-3 border-r border-gray-200 dark:border-gray-700 text-center w-28">TỔNG CA</th>
+                                <th class="py-3 px-4 text-center w-24">HÀNH ĐỘNG</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-sm text-gray-800 dark:text-gray-200">
+                            <template x-for="emp in filteredEmployees" :key="emp.id">
+                                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition">
+                                    <td class="py-4 px-4 font-bold border-r border-gray-200 dark:border-gray-700">
+                                        <div x-text="emp.name" class="mb-1"></div>
+                                        <div class="flex gap-2 text-[10px]">
+                                            <button @click="toggleFullEmp(emp, true)" class="text-indigo-600 dark:text-indigo-400 hover:underline">Chọn cả tuần</button>
+                                            <span class="text-gray-300 dark:text-gray-600">|</span>
+                                            <button @click="toggleFullEmp(emp, false)" class="text-rose-500 hover:underline">Bỏ chọn</button>
+                                        </div>
+                                    </td>
+                                    
+                                    <template x-for="day in days" :key="day.key">
+                                        <td class="py-3 px-2 border-r border-gray-200 dark:border-gray-700 text-center align-middle">
+                                            <div class="flex flex-col gap-1 items-start pl-2">
+                                                <label class="inline-flex items-center gap-1.5 text-xs cursor-pointer select-none">
+                                                    <input type="checkbox" x-model="emp.schedule[currentWeekKey][day.key].ca1" @change="saveToStorage()" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 dark:bg-gray-700 dark:border-gray-600"> Ca 1
+                                                </label>
+                                                <label class="inline-flex items-center gap-1.5 text-xs cursor-pointer select-none">
+                                                    <input type="checkbox" x-model="emp.schedule[currentWeekKey][day.key].ca2" @change="saveToStorage()" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 dark:bg-gray-700 dark:border-gray-600"> Ca 2
+                                                </label>
+                                                <label class="inline-flex items-center gap-1.5 text-xs cursor-pointer select-none">
+                                                    <input type="checkbox" x-model="emp.schedule[currentWeekKey][day.key].ca3" @change="saveToStorage()" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 dark:bg-gray-700 dark:border-gray-600"> Ca 3
+                                                </label>
+                                            </div>
+                                        </td>
+                                    </template>
+
+                                    <td class="py-4 px-3 border-r border-gray-200 dark:border-gray-700 text-center font-bold text-indigo-600 dark:text-indigo-400" x-text="getEmpTotalShifts(emp)"></td>
+
+                                    <td class="py-4 px-4 text-center">
+                                        <button @click="deleteEmployee(emp.id)" class="text-gray-400 hover:text-rose-600 transition p-2" title="Xóa nhân viên">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- CHẾ ĐỘ: THỐNG KÊ THÁNG -->
+            <div x-show="role === 'admin' && currentView === 'monthly'" class="space-y-6">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-wrap justify-between items-center gap-4 transition-colors">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-1">Bảng Thống Kê Tổng Số Ca Trực Theo Tháng</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Tổng hợp toàn bộ các ca trực của từng nhân sự xuất hiện trong tháng đã chọn.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Chọn Tháng</label>
+                            <select x-model="statsMonth" class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <template x-for="m in 12"><option :value="m" x-text="'Tháng ' + m"></option></template>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Chọn Năm</label>
+                            <select x-model="statsYear" class="border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700 transition-colors">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 text-xs font-bold uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
+                                <th class="py-3.5 px-4 border-r border-gray-200 dark:border-gray-700">STT</th>
+                                <th class="py-3.5 px-6 border-r border-gray-200 dark:border-gray-700">HỌ VÀ TÊN NHÂN SỰ</th>
+                                <th class="py-3.5 px-4 border-r border-gray-200 dark:border-gray-700 text-center">TỔNG CA 1</th>
+                                <th class="py-3.5 px-4 border-r border-gray-200 dark:border-gray-700 text-center">TỔNG CA 2</th>
+                                <th class="py-3.5 px-4 border-r border-gray-200 dark:border-gray-700 text-center">TỔNG CA 3</th>
+                                <th class="py-3.5 px-6 text-center text-indigo-600 dark:text-indigo-400 font-extrabold">TỔNG CỘNG SỐ CA TRỰC</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-sm text-gray-800 dark:text-gray-200">
+                            <template x-for="(emp, idx) in employees" :key="emp.id">
+                                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition">
+                                    <td class="py-4 px-4 border-r border-gray-200 dark:border-gray-700 text-center font-medium text-gray-500" x-text="idx + 1"></td>
+                                    <td class="py-4 px-6 border-r border-gray-200 dark:border-gray-700 font-bold" x-text="emp.name"></td>
+                                    <td class="py-4 px-4 border-r border-gray-200 dark:border-gray-700 text-center font-semibold text-blue-600 dark:text-blue-400" x-text="getMonthlyStatsForEmp(emp).ca1"></td>
+                                    <td class="py-4 px-4 border-r border-gray-200 dark:border-gray-700 text-center font-semibold text-amber-600 dark:text-amber-400" x-text="getMonthlyStatsForEmp(emp).ca2"></td>
+                                    <td class="py-4 px-4 border-r border-gray-200 dark:border-gray-700 text-center font-semibold text-purple-600 dark:text-purple-400" x-text="getMonthlyStatsForEmp(emp).ca3"></td>
+                                    <td class="py-4 px-6 text-center font-extrabold text-indigo-600 dark:text-indigo-400 text-base" x-text="getMonthlyStatsForEmp(emp).total"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- CHẾ ĐỘ: ĐĂNG KÝ CA (Nhân viên) -->
+            <div x-show="role === 'staff' && currentView === 'staffregister'" class="space-y-6 max-w-4xl mx-auto">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-wrap justify-between items-center gap-4 transition-colors">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-1">Đăng Ký / Tùy Chỉnh Lịch Trực Cá Nhân</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400" x-text="isCurrentWeekLocked() ? 'Tuần này đã bị khóa lịch bởi Quản trị viên.' : 'Tích chọn các ca trực của bạn trong tuần đang hiển thị.'"></p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-4 py-2 rounded-lg text-sm font-semibold">
+                            Tổng số ca đã chọn: <span x-text="currentStaffData ? getEmpTotalShifts(currentStaffData) : 0"></span> ca
+                        </div>
+                    </div>
+                </div>
+
+                <template x-if="isCurrentWeekLocked()">
+                    <div class="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 p-4 rounded-xl text-sm flex items-center gap-3">
+                        <i class="fa-solid fa-triangle-exclamation text-lg text-amber-600"></i>
+                        <span>Lịch tuần này đã khóa đăng ký chỉnh sửa. Vui lòng liên hệ Quản trị viên nếu cần thay đổi ca.</span>
+                    </div>
+                </template>
+
+                <template x-if="!isCurrentWeekLocked()">
+                    <div class="flex gap-3">
+                        <button @click="if(currentStaffData) { toggleFullEmp(currentStaffData, true); }" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm flex items-center gap-2">
+                            <i class="fa-solid fa-check-double"></i> Chọn nhanh cả tuần này
+                        </button>
+                        <button @click="if(currentStaffData) { toggleFullEmp(currentStaffData, false); }" class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 px-4 py-2 rounded-lg text-sm font-medium transition">
+                            Bỏ chọn toàn bộ
+                        </button>
+                    </div>
+                </template>
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700 transition-colors">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 text-xs font-bold uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
+                                <th class="py-3 px-4 border-r border-gray-200 dark:border-gray-700 text-center w-32">THỨ</th>
+                                <template x-for="day in days" :key="day.key">
+                                    <th class="py-3 px-3 border-r border-gray-200 dark:border-gray-700 text-center" x-text="day.name"></th>
+                                </template>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-sm text-gray-800 dark:text-gray-200">
+                            <template x-if="currentStaffData">
+                                <tr>
+                                    <td class="py-4 px-4 font-bold border-r border-gray-200 dark:border-gray-700 text-center bg-gray-50 dark:bg-gray-700/30" x-text="currentStaffData.name"></td>
+                                    
+                                    <template x-for="day in days" :key="day.key">
+                                        <td class="py-3 px-2 border-r border-gray-200 dark:border-gray-700 text-center align-middle">
+                                            <div class="flex flex-col gap-1 items-center">
+                                                <label class="inline-flex items-center gap-1.5 text-xs cursor-pointer select-none">
+                                                    <input type="checkbox" :disabled="isCurrentWeekLocked()" x-model="currentStaffData.schedule[currentWeekKey][day.key].ca1" @change="saveToStorage()" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600"> Ca 1
+                                                </label>
+                                                <label class="inline-flex items-center gap-1.5 text-xs cursor-pointer select-none">
+                                                    <input type="checkbox" :disabled="isCurrentWeekLocked()" x-model="currentStaffData.schedule[currentWeekKey][day.key].ca2" @change="saveToStorage()" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600"> Ca 2
+                                                </label>
+                                                <label class="inline-flex items-center gap-1.5 text-xs cursor-pointer select-none">
+                                                    <input type="checkbox" :disabled="isCurrentWeekLocked()" x-model="currentStaffData.schedule[currentWeekKey][day.key].ca3" @change="saveToStorage()" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600"> Ca 3
+                                                </label>
+                                            </div>
+                                        </td>
+                                    </template>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- CHẾ ĐỘ: TIMELINE NGÀY -->
+            <div x-show="currentView === 'timeline'" class="space-y-6 max-w-5xl mx-auto">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 space-y-4 transition-colors">
+                    <div class="flex flex-wrap justify-between items-center gap-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-800 dark:text-white">Timeline Trực Ca Theo Ngày</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Chọn một ngày trong tuần để xem danh sách nhân sự trực chi tiết từng ca.</p>
+                        </div>
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <button @click="exportDailyReportWord(selectedTimelineDay)" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 shadow-sm">
+                                <i class="fa-solid fa-file-word"></i> Xuất File Word Ngày Này
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-1.5 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg overflow-x-auto">
+                        <template x-for="day in days" :key="day.key">
+                            <button @click="selectedTimelineDay = day.key" :class="selectedTimelineDay === day.key ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900'" class="px-3.5 py-1.5 rounded-md text-xs font-bold transition whitespace-nowrap" x-text="day.name"></button>
+                        </template>
+                    </div>
+
+                    <div class="text-sm font-semibold text-indigo-600 dark:text-indigo-400 border-l-4 border-indigo-600 pl-3">
+                        Chi tiết nhân sự trực ngày: <span class="uppercase font-bold" x-text="getDayFullName(selectedTimelineDay)"></span> (Ngày: <span x-text="getDateStringForDay(selectedTimelineDay)"></span>)
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col transition-colors">
+                        <div class="bg-blue-50 dark:bg-blue-900/30 px-5 py-3.5 border-b border-blue-100 dark:border-blue-800 flex justify-between items-center">
+                            <h4 class="font-bold text-blue-900 dark:text-blue-300 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-sun text-amber-500"></i> Ca 1
+                            </h4>
+                            <span class="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 text-xs font-bold px-2.5 py-1 rounded-full" x-text="getStaffsForShift(selectedTimelineDay, 'ca1').length + ' nhân sự'"></span>
+                        </div>
+                        <div class="p-5 flex-1 space-y-2">
+                            <template x-if="getStaffsForShift(selectedTimelineDay, 'ca1').length === 0">
+                                <p class="text-gray-400 text-xs italic text-center py-6">Không có nhân sự trực ca này</p>
+                            </template>
+                            <template x-for="(name, index) in getStaffsForShift(selectedTimelineDay, 'ca1')" :key="name">
+                                <div class="bg-gray-50 dark:bg-gray-700/40 border border-gray-100 dark:border-gray-700 px-3.5 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 flex items-center gap-2.5 transition">
+                                    <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400" x-text="(index + 1) + '.'"></span>
+                                    <span x-text="name"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col transition-colors">
+                        <div class="bg-amber-50 dark:bg-amber-900/30 px-5 py-3.5 border-b border-amber-100 dark:border-amber-800 flex justify-between items-center">
+                            <h4 class="font-bold text-amber-900 dark:text-amber-300 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-cloud-sun text-orange-500"></i> Ca 2
+                            </h4>
+                            <span class="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 text-xs font-bold px-2.5 py-1 rounded-full" x-text="getStaffsForShift(selectedTimelineDay, 'ca2').length + ' nhân sự'"></span>
+                        </div>
+                        <div class="p-5 flex-1 space-y-2">
+                            <template x-if="getStaffsForShift(selectedTimelineDay, 'ca2').length === 0">
+                                <p class="text-gray-400 text-xs italic text-center py-6">Không có nhân sự trực ca này</p>
+                            </template>
+                            <template x-for="(name, index) in getStaffsForShift(selectedTimelineDay, 'ca2')" :key="name">
+                                <div class="bg-gray-50 dark:bg-gray-700/40 border border-gray-100 dark:border-gray-700 px-3.5 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 flex items-center gap-2.5 transition">
+                                    <span class="text-xs font-bold text-amber-600 dark:text-amber-400" x-text="(index + 1) + '.'"></span>
+                                    <span x-text="name"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col transition-colors">
+                        <div class="bg-indigo-50 dark:bg-indigo-900/30 px-5 py-3.5 border-b border-indigo-100 dark:border-indigo-800 flex justify-between items-center">
+                            <h4 class="font-bold text-indigo-900 dark:text-indigo-300 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-moon text-indigo-600 dark:text-indigo-400"></i> Ca 3
+                            </h4>
+                            <span class="bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 text-xs font-bold px-2.5 py-1 rounded-full" x-text="getStaffsForShift(selectedTimelineDay, 'ca3').length + ' nhân sự'"></span>
+                        </div>
+                        <div class="p-5 flex-1 space-y-2">
+                            <template x-if="getStaffsForShift(selectedTimelineDay, 'ca3').length === 0">
+                                <p class="text-gray-400 text-xs italic text-center py-6">Không có nhân sự trực ca này</p>
+                            </template>
+                            <template x-for="(name, index) in getStaffsForShift(selectedTimelineDay, 'ca3')" :key="name">
+                                <div class="bg-gray-50 dark:bg-gray-700/40 border border-gray-100 dark:border-gray-700 px-3.5 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 flex items-center gap-2.5 transition">
+                                    <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400" x-text="(index + 1) + '.'"></span>
+                                    <span x-text="name"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL ĐỔI MẬT KHẨU -->
+    <div x-show="showPasswordModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" x-cloak>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden p-6 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white">Đổi Mật Khẩu Admin</h3>
+                <button @click="showPasswordModal = false" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <template x-if="passwordMsg">
+                <div :class="passwordError ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300' : 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300'" class="text-xs p-2.5 rounded-lg border font-medium text-center" x-text="passwordMsg"></div>
+            </template>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Mật khẩu hiện tại</label>
+                    <input type="password" x-model="pwdForm.oldPwd" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Mật khẩu mới</label>
+                    <input type="password" x-model="pwdForm.newPwd" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Xác nhận mật khẩu mới</label>
+                    <input type="password" x-model="pwdForm.confirmPwd" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button @click="showPasswordModal = false" class="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 py-2 rounded-lg text-sm font-medium transition">Hủy</button>
+                <button @click="changeAdminPassword()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-sm font-medium transition shadow-sm">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Logic ứng dụng kết nối Firebase Realtime -->
+    <script>
+        function hrmApp() {
+            return {
+                isLoggedIn: localStorage.getItem('hrm_logged_in') === 'true',
+                role: localStorage.getItem('hrm_role') || 'staff',
+                currentUser: localStorage.getItem('hrm_current_user') || '',
+                loginType: 'staff',
+                adminForm: { username: '', password: '' },
+                selectedStaffName: '',
+                loginError: '',
+                newEmpName: '',
+                searchKeyword: '',
+                darkMode: localStorage.getItem('hrm_dark_mode') === 'true',
+                showPasswordModal: false,
+                pwdForm: { oldPwd: '', newPwd: '', confirmPwd: '' },
+                passwordMsg: '',
+                passwordError: false,
+
+                currentView: localStorage.getItem('hrm_role') === 'admin' ? 'table' : 'staffregister', 
+                selectedTimelineDay: 't2', 
+                currentWeekOffset: 0,
+                
+                statsMonth: new Date().getMonth() + 1,
+                statsYear: new Date().getFullYear(),
+
+                days: [
+                    { key: 't2', name: 'Thứ 2' },
+                    { key: 't3', name: 'Thứ 3' },
+                    { key: 't4', name: 'Thứ 4' },
+                    { key: 't5', name: 'Thứ 5' },
+                    { key: 't6', name: 'Thứ 6' },
+                    { key: 't7', name: 'Thứ 7' },
+                    { key: 'cn', name: 'Chủ Nhật' }
+                ],
+                dayKeys: ['t2', 't3', 't4', 't5', 't6', 't7', 'cn'],
+                
+                employees: JSON.parse(localStorage.getItem('hrm_smart_schedule')) || [
+                    { id: 1, name: 'Ngọc Hào', schedule: window.getInitialSchedules() },
+                    { id: 2, name: 'Anh Bình', schedule: window.getInitialSchedules() },
+                    { id: 3, name: 'Anh Đĩnh', schedule: window.getInitialSchedules() },
+                    { id: 4, name: 'Anh Vũ', schedule: window.getInitialSchedules() },
+                    { id: 5, name: 'anh Chiến', schedule: window.getInitialSchedules() },
+                    { id: 6, name: 'Anh Tú', schedule: window.getInitialSchedules() },
+                    { id: 7, name: 'Anh Hậu', schedule: window.getInitialSchedules() },
+                    { id: 8, name: 'Trung', schedule: window.getInitialSchedules() },
+                    { id: 9, name: 'Anh Xuân Huy', schedule: window.getInitialSchedules() },
+                    { id: 10, name: 'Công', schedule: window.getInitialSchedules() },
+                    { id: 11, name: 'Phạm phong', schedule: window.getInitialSchedules() },
+                    { id: 12, name: 'Duy Anh', schedule: window.getInitialSchedules() },
+                    { id: 13, name: 'Việt Nam', schedule: window.getInitialSchedules() },
+                    { id: 14, name: 'Anh Phong Gió', schedule: window.getInitialSchedules() },
+                    { id: 15, name: 'Khánh Nam', schedule: window.getInitialSchedules() }
+                ],
+
+                lockedWeeks: JSON.parse(localStorage.getItem('hrm_locked_weeks')) || {},
 
                 init() {
-                    // Lắng nghe dữ liệu từ Firebase Realtime Database
-                    const dataRef = ref(db, 'hrm_schedule_data');
-                    onValue(dataRef, (snapshot) => {
-                        const serverData = snapshot.val();
-                        if (serverData) {
-                            this.staffs = serverData.staffs || [];
-                            this.shifts = serverData.shifts || {};
-                            this.auditLogs = serverData.auditLogs || [];
-                        } else {
-                            // Dữ liệu khởi tạo mẫu lần đầu nếu database trống
-                            this.logAction('KHỞI TẠO', 'Hệ thống đã được thiết lập thành công trên Firebase.');
+                    // Đồng bộ Realtime từ Firebase Database
+                    if (window.db && window.fbRef && window.fbOnValue) {
+                        const scheduleRef = window.fbRef(window.db, 'hrm_smart_schedule_data');
+                        window.fbOnValue(scheduleRef, (snapshot) => {
+                            const data = snapshot.val();
+                            if (data) {
+                                if (data.employees) this.employees = data.employees;
+                                if (data.lockedWeeks) this.lockedWeeks = data.lockedWeeks;
+                            }
+                        });
+                    }
+                },
+
+                toggleDarkMode() {
+                    this.darkMode = !this.darkMode;
+                    localStorage.setItem('hrm_dark_mode', this.darkMode);
+                },
+
+                get filteredEmployees() {
+                    if (!this.searchKeyword.trim()) return this.employees;
+                    let keyword = this.searchKeyword.toLowerCase().trim();
+                    return this.employees.filter(e => e.name.toLowerCase().includes(keyword));
+                },
+
+                get currentWeekKey() {
+                    let d = new Date();
+                    d.setDate(d.getDate() + (this.currentWeekOffset * 7));
+                    let day = d.getDay();
+                    let diff = d.getDate() - day + (day === 0 ? -6 : 1);
+                    let monday = new Date(d.setDate(diff));
+                    return monday.toISOString().slice(0, 10);
+                },
+
+                isCurrentWeekLocked() {
+                    return !!this.lockedWeeks[this.currentWeekKey];
+                },
+
+                toggleLockWeek() {
+                    this.lockedWeeks[this.currentWeekKey] = !this.lockedWeeks[this.currentWeekKey];
+                    this.saveToStorage();
+                },
+
+                getWeekDisplayString() {
+                    let d = new Date();
+                    d.setDate(d.getDate() + (this.currentWeekOffset * 7));
+                    let day = d.getDay();
+                    let diff = d.getDate() - day + (day === 0 ? -6 : 1);
+                    let monday = new Date(d.setDate(diff));
+                    let sunday = new Date(monday);
+                    sunday.setDate(monday.getDate() + 6);
+
+                    const formatDate = (date) => {
+                        let dd = String(date.getDate()).padStart(2, '0');
+                        let mm = String(date.getMonth() + 1).padStart(2, '0');
+                        let yyyy = date.getFullYear();
+                        return `${dd}/${mm}/${yyyy}`;
+                    };
+                    return `Tuần: ${formatDate(monday)} - ${formatDate(sunday)}`;
+                },
+
+                getDateStringForDay(dKey) {
+                    let d = new Date(this.currentWeekKey); 
+                    let dayIndex = this.dayKeys.indexOf(dKey);
+                    d.setDate(d.getDate() + dayIndex);
+                    let dd = String(d.getDate()).padStart(2, '0');
+                    let mm = String(d.getMonth() + 1).padStart(2, '0');
+                    return `${dd}/${mm}`;
+                },
+
+                changeWeek(direction) { this.currentWeekOffset += direction; },
+                resetToCurrentWeek() { this.currentWeekOffset = 0; },
+                getDayFullName(dKey) {
+                    const found = this.days.find(d => d.key === dKey);
+                    return found ? found.name : '';
+                },
+
+                getStaffsForShift(dKey, shiftName) {
+                    let staffList = [];
+                    this.employees.forEach(emp => {
+                        let weekSched = emp.schedule[this.currentWeekKey];
+                        if (weekSched && weekSched[dKey] && weekSched[dKey][shiftName]) {
+                            staffList.push(emp.name);
                         }
                     });
+                    return staffList;
                 },
 
-                // Hàm đồng bộ dữ liệu lên Cloud
-                syncToCloud() {
-                    set(ref(db, 'hrm_schedule_data'), {
-                        staffs: this.staffs,
-                        shifts: this.shifts,
-                        auditLogs: this.auditLogs
+                get currentStaffData() {
+                    return this.employees.find(e => e.name === this.currentUser);
+                },
+
+                getEmpTotalShifts(emp) {
+                    let total = 0;
+                    if (!emp.schedule[this.currentWeekKey]) return 0;
+                    this.dayKeys.forEach(dKey => {
+                        let daySched = emp.schedule[this.currentWeekKey][dKey];
+                        if (daySched.ca1) total++;
+                        if (daySched.ca2) total++;
+                        if (daySched.ca3) total++;
                     });
+                    return total;
                 },
 
-                // Ghi nhật ký thao tác
-                logAction(action, details) {
-                    const newLog = {
-                        id: Date.now(),
-                        time: new Date().toLocaleString('vi-VN'),
-                        user: this.currentUser ? this.currentUser.name : 'Hệ thống',
-                        action: action,
-                        details: details
-                    };
-                    this.auditLogs.unshift(newLog);
-                    if (this.auditLogs.length > 100) this.auditLogs.pop();
-                    this.syncToCloud(); // Tự động đẩy lên Firebase để máy B nhận được
+                getTotalAssignedShifts() {
+                    let total = 0;
+                    this.employees.forEach(emp => { total += this.getEmpTotalShifts(emp); });
+                    return total;
                 },
 
-                clearLogs() {
-                    this.auditLogs = [];
-                    this.syncToCloud();
+                getMonthlyStatsForEmp(emp) {
+                    let stats = { ca1: 0, ca2: 0, ca3: 0, total: 0 };
+                    if (!emp.schedule) return stats;
+
+                    Object.keys(emp.schedule).forEach(mondayKey => {
+                        let mondayDate = new Date(mondayKey);
+                        let weekBelongsToMonth = false;
+                        let weekDaysMap = {};
+
+                        for (let i = 0; i < 7; i++) {
+                            let currDate = new Date(mondayDate);
+                            currDate.setDate(mondayDate.getDate() + i);
+                            if (currDate.getMonth() + 1 == parseInt(this.statsMonth) && currDate.getFullYear() == parseInt(this.statsYear)) {
+                                weekBelongsToMonth = true;
+                            }
+                            weekDaysMap[this.dayKeys[i]] = currDate;
+                        }
+
+                        if (weekBelongsToMonth) {
+                            let weekData = emp.schedule[mondayKey];
+                            if (weekData) {
+                                this.dayKeys.forEach(dKey => {
+                                    let currDate = weekDaysMap[dKey];
+                                    if (currDate && currDate.getMonth() + 1 == parseInt(this.statsMonth) && currDate.getFullYear() == parseInt(this.statsYear)) {
+                                        let daySched = weekData[dKey];
+                                        if (daySched) {
+                                            if (daySched.ca1) { stats.ca1++; stats.total++; }
+                                            if (daySched.ca2) { stats.ca2++; stats.total++; }
+                                            if (daySched.ca3) { stats.ca3++; stats.total++; }
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
+                    return stats;
+                },
+
+                getPeakDayName() {
+                    let maxCount = -1;
+                    let peakDay = 'Chưa có';
+                    this.days.forEach(day => {
+                        let count = this.getStaffsForShift(day.key, 'ca1').length + 
+                                    this.getStaffsForShift(day.key, 'ca2').length + 
+                                    this.getStaffsForShift(day.key, 'ca3').length;
+                        if (count > maxCount) {
+                            maxCount = count;
+                            peakDay = day.name;
+                        }
+                    });
+                    return maxCount > 0 ? `${peakDay} (${maxCount} lượt)` : 'Không có';
+                },
+
+                toggleFullEmp(emp, status) {
+                    if (this.isCurrentWeekLocked()) {
+                        alert('Tuần này đã bị khóa lịch, không thể thay đổi!');
+                        return;
+                    }
+                    if (!emp.schedule[this.currentWeekKey]) {
+                        emp.schedule[this.currentWeekKey] = window.getDefaultWeekSchedule();
+                    }
+                    this.dayKeys.forEach(dKey => {
+                        emp.schedule[this.currentWeekKey][dKey].ca1 = status;
+                        emp.schedule[this.currentWeekKey][dKey].ca2 = status;
+                        emp.schedule[this.currentWeekKey][dKey].ca3 = status;
+                    });
+                    this.saveToStorage();
+                },
+
+                handleAdminLogin() {
+                    const currentPwd = localStorage.getItem('hrm_admin_password') || 'admin123';
+                    if (this.adminForm.username === 'admin' && this.adminForm.password === currentPwd) {
+                        this.isLoggedIn = true;
+                        this.role = 'admin';
+                        this.currentUser = 'Admin';
+                        this.currentView = 'table';
+                        localStorage.setItem('hrm_logged_in', 'true');
+                        localStorage.setItem('hrm_role', 'admin');
+                        localStorage.setItem('hrm_current_user', 'Admin');
+                        this.loginError = '';
+                    } else {
+                        this.loginError = 'Tên đăng nhập hoặc mật khẩu quản trị không đúng!';
+                    }
+                },
+
+                handleStaffLogin() {
+                    if (!this.selectedStaffName) {
+                        this.loginError = 'Vui lòng chọn tên nhân viên của bạn!';
+                        return;
+                    }
+                    this.isLoggedIn = true;
+                    this.role = 'staff';
+                    this.currentUser = this.selectedStaffName;
+                    this.currentView = 'staffregister';
+                    localStorage.setItem('hrm_logged_in', 'true');
+                    localStorage.setItem('hrm_role', 'staff');
+                    localStorage.setItem('hrm_current_user', this.selectedStaffName);
+                    this.loginError = '';
+                },
+
+                changeAdminPassword() {
+                    const currentPwd = localStorage.getItem('hrm_admin_password') || 'admin123';
+                    if (this.pwdForm.oldPwd !== currentPwd) {
+                        this.passwordError = true;
+                        this.passwordMsg = 'Mật khẩu hiện tại không chính xác!';
+                        return;
+                    }
+                    if (!this.pwdForm.newPwd || this.pwdForm.newPwd.length < 6) {
+                        this.passwordError = true;
+                        this.passwordMsg = 'Mật khẩu mới phải có ít nhất 6 ký tự!';
+                        return;
+                    }
+                    if (this.pwdForm.newPwd !== this.pwdForm.confirmPwd) {
+                        this.passwordError = true;
+                        this.passwordMsg = 'Xác nhận mật khẩu mới không khớp!';
+                        return;
+                    }
+
+                    localStorage.setItem('hrm_admin_password', this.pwdForm.newPwd);
+                    this.passwordError = false;
+                    this.passwordMsg = 'Đổi mật khẩu thành công!';
+                    this.pwdForm = { oldPwd: '', newPwd: '', confirmPwd: '' };
+                    setTimeout(() => { this.showPasswordModal = false; this.passwordMsg = ''; }, 1500);
+                },
+
+                logout() {
+                    this.isLoggedIn = false;
+                    this.adminForm = { username: '', password: '' };
+                    this.selectedStaffName = '';
+                    this.loginType = 'staff';
+                    localStorage.removeItem('hrm_logged_in');
+                    localStorage.removeItem('hrm_role');
+                    localStorage.removeItem('hrm_current_user');
+                },
+
+                addEmployee() {
+                    if (!this.newEmpName.trim()) return;
+                    const newId = this.employees.length > 0 ? Math.max(...this.employees.map(e => e.id)) + 1 : 1;
+                    this.employees.push({
+                        id: newId,
+                        name: this.newEmpName.trim(),
+                        schedule: window.getInitialSchedules()
+                    });
+                    this.newEmpName = '';
+                    this.saveToStorage();
+                },
+
+                deleteEmployee(id) {
+                    if (confirm('Bạn có chắc chắn muốn xóa nhân viên này khỏi hệ thống?')) {
+                        this.employees = this.employees.filter(e => e.id !== id);
+                        this.saveToStorage();
+                    }
+                },
+
+                clearAllShifts() {
+                    if (this.isCurrentWeekLocked()) {
+                        alert('Tuần này đã bị khóa lịch!');
+                        return;
+                    }
+                    if (confirm('Bạn có chắc chắn muốn bỏ chọn toàn bộ ca làm việc trong tuần này?')) {
+                        this.employees.forEach(emp => {
+                            emp.schedule[this.currentWeekKey] = window.getDefaultWeekSchedule(false);
+                        });
+                        this.saveToStorage();
+                    }
+                },
+
+                saveToStorage() {
+                    if (this.isCurrentWeekLocked() && this.role === 'staff') {
+                        alert('Lịch tuần này đã bị khóa, thao tác của bạn không được lưu.');
+                        return;
+                    }
+                    this.employees.forEach(emp => {
+                        if (!emp.schedule[this.currentWeekKey]) {
+                            emp.schedule[this.currentWeekKey] = window.getDefaultWeekSchedule();
+                        }
+                    });
+
+                    // Lưu dữ liệu lên Firebase Realtime Database
+                    if (window.db && window.fbRef && window.fbSet) {
+                        window.fbSet(window.fbRef(window.db, 'hrm_smart_schedule_data'), {
+                            employees: this.employees,
+                            lockedWeeks: this.lockedWeeks
+                        });
+                    }
+
+                    // Lưu dự phòng vào localStorage
+                    localStorage.setItem('hrm_smart_schedule', JSON.stringify(this.employees));
+                    localStorage.setItem('hrm_locked_weeks', JSON.stringify(this.lockedWeeks));
+                },
+
+                exportDailyReportWord(dKey) {
+                    let dayName = this.getDayFullName(dKey);
+                    let dateStr = this.getDateStringForDay(dKey);
+                    let ca1List = this.getStaffsForShift(dKey, 'ca1');
+                    let ca2List = this.getStaffsForShift(dKey, 'ca2');
+                    let ca3List = this.getStaffsForShift(dKey, 'ca3');
+
+                    let htmlContent = `
+                        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                        <head><meta charset='utf-8'><title>Báo Cáo</title>
+                        <style>body { font-family: 'Times New Roman'; font-size: 14pt; } table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid black; padding: 8px; vertical-align: top; }</style></head>
+                        <body>
+                            <table>
+                                <tr style="background-color: #f2f2f2;"><td style="text-align:center; font-weight:bold;">Ca</td><td style="font-weight:bold;">${dayName} ngày ${dateStr}</td><td></td></tr>
+                                <tr><td style="text-align:center; font-weight:bold;">1</td><td>${ca1List.map((n, i) => `${i+1}. ${n}`).join('<br>') || '<em>Không có</em>'}</td><td></td></tr>
+                                <tr><td style="text-align:center; font-weight:bold;">2</td><td>${ca2List.map((n, i) => `${i+1}. ${n}`).join('<br>') || '<em>Không có</em>'}</td><td><span style="color:red;">trực trưa: ${ca2List.slice(0, 2).join(', ')}</span><br><br><span style="color:red;">Trực Tối: ${ca3List.slice(0, 2).join(', ')}</span></td></tr>
+                                <tr><td style="text-align:center; font-weight:bold;">3</td><td>${ca3List.map((n, i) => `${i+1}. ${n}`).join('<br>') || '<em>Không có</em>'}</td><td></td></tr>
+                            </table>
+                        </body></html>
+                    `;
+                    let blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
+                    let a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `BaoCao_${dayName}_${dateStr.replace('/', '-')}.doc`;
+                    a.click();
+                },
+
+                exportWeeklyReportWord() {
+                    let weekStr = this.getWeekDisplayString();
+                    let daysHtml = '';
+                    this.days.forEach(day => {
+                        let dateStr = this.getDateStringForDay(day.key);
+                        let ca1List = this.getStaffsForShift(day.key, 'ca1');
+                        let ca2List = this.getStaffsForShift(day.key, 'ca2');
+                        let ca3List = this.getStaffsForShift(day.key, 'ca3');
+
+                        daysHtml += `
+                            <h3>${day.name} - Ngày ${dateStr}</h3>
+                            <table>
+                                <tr style="background-color: #f2f2f2;"><td style="text-align:center;font-weight:bold;">Ca</td><td style="font-weight:bold;">Danh sách</td><td>Ghi chú</td></tr>
+                                <tr><td style="text-align:center;font-weight:bold;">1</td><td>${ca1List.map((n, i) => `${i+1}. ${n}`).join('<br>') || '<em>Không có</em>'}</td><td></td></tr>
+                                <tr><td style="text-align:center;font-weight:bold;">2</td><td>${ca2List.map((n, i) => `${i+1}. ${n}`).join('<br>') || '<em>Không có</em>'}</td><td><span style="color:red;">trực trưa: ${ca2List.slice(0, 2).join(', ')}</span><br><br><span style="color:red;">Trực Tối: ${ca3List.slice(0, 2).join(', ')}</span></td></tr>
+                                <tr><td style="text-align:center;font-weight:bold;">3</td><td>${ca3List.map((n, i) => `${i+1}. ${n}`).join('<br>') || '<em>Không có</em>'}</td><td></td></tr>
+                            </table><br>
+                        `;
+                    });
+
+                    let htmlContent = `
+                        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                        <head><meta charset='utf-8'><title>Báo Cáo Cả Tuần</title>
+                        <style>body { font-family: 'Times New Roman'; font-size: 14pt; } table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid black; padding: 6px; vertical-align: top; }</style></head>
+                        <body>
+                            <h2 style="text-align:center;">BÁO CÁO LỊCH TRỰC TỔNG HỢP</h2>
+                            <p style="text-align:center; font-weight:bold;">${weekStr}</p><hr>${daysHtml}
+                        </body></html>
+                    `;
+                    let blob = new Blob(['\ufeff' + htmlContent], { type: 'application/msword' });
+                    let a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `BaoCao_TongHop.doc`;
+                    a.click();
                 }
-            }));
-        });
+            }
+        }
+
+        window.getDefaultWeekSchedule = function(checked = false) {
+            let sched = {};
+            ['t2', 't3', 't4', 't5', 't6', 't7', 'cn'].forEach(d => {
+                sched[d] = { ca1: checked, ca2: checked, ca3: checked };
+            });
+            return sched;
+        }
+
+        window.getInitialSchedules = function() {
+            let initial = {};
+            let d = new Date();
+            let day = d.getDay();
+            let diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            let monday = new Date(d.setDate(diff)).toISOString().slice(0, 10);
+            initial[monday] = window.getDefaultWeekSchedule();
+            return initial;
+        }
     </script>
 </body>
 </html>
