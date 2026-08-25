@@ -130,65 +130,7 @@
         </header>
 
         <main class="p-6 max-w-full overflow-x-auto flex-1 space-y-6">
-            <!-- CHẾ ĐỘ: ĐĂNG KÝ / CHỈNH SỬA CA CỦA NHÂN VIÊN (MOBILE FRIENDLY) -->
-<div x-show="role === 'staff' && currentView === 'staffregister'" class="space-y-4 max-w-xl mx-auto pb-10" x-cloak>
-    
-    <!-- Cảnh báo nếu tuần đã bị khóa -->
-    <template x-if="isCurrentWeekLocked()">
-        <div class="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 p-4 rounded-xl text-sm flex items-center gap-3 shadow-sm">
-            <i class="fa-solid fa-lock text-lg"></i>
-            <div>
-                <span class="font-bold block">Tuần này đã bị khóa!</span>
-                <span>Bạn không thể thay đổi ca trực nữa. Vui lòng liên hệ quản trị viên.</span>
-            </div>
-        </div>
-    </template>
-
-    <!-- Thẻ tóm tắt thông tin cá nhân -->
-    <div class="bg-indigo-600 text-white p-5 rounded-2xl shadow-md flex justify-between items-center">
-        <div>
-            <span class="text-indigo-200 text-xs uppercase font-bold tracking-wider block mb-1">Nhân sự đăng ký</span>
-            <h3 class="text-xl font-bold" x-text="currentUser"></h3>
-        </div>
-        <div class="text-right">
-            <span class="text-indigo-200 text-xs uppercase font-bold tracking-wider block mb-1">Tổng ca tuần</span>
-            <span class="text-2xl font-extrabold" x-text="getMyTotalShifts()"></span>
-        </div>
-    </div>
-
-    <!-- Danh sách các ngày trong tuần dạng thẻ dọc -->
-    <div class="space-y-3">
-        <template x-for="day in days" :key="day.key">
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-                <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-100 dark:border-gray-700">
-                    <span class="font-bold text-gray-800 dark:text-white text-base" x-text="day.name"></span>
-                    <span class="text-xs text-gray-400 font-medium" x-text="getDayFormattedDate(day.key)"></span>
-                </div>
-
-                <div class="grid grid-cols-3 gap-2">
-                    <label :class="isCurrentWeekLocked() ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-indigo-50 dark:hover:bg-gray-700'" 
-                           class="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 transition select-none">
-                        <input type="checkbox" :disabled="isCurrentWeekLocked()" x-model="getMyScheduleObj()[day.key].ca1" @change="saveToStorage()" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 dark:bg-gray-700 dark:border-gray-600">
-                        <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Ca 1</span>
-                    </label>
-
-                    <label :class="isCurrentWeekLocked() ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-indigo-50 dark:hover:bg-gray-700'" 
-                           class="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 transition select-none">
-                        <input type="checkbox" :disabled="isCurrentWeekLocked()" x-model="getMyScheduleObj()[day.key].ca2" @change="saveToStorage()" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 dark:bg-gray-700 dark:border-gray-600">
-                        <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Ca 2</span>
-                    </label>
-
-                    <label :class="isCurrentWeekLocked() ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-indigo-50 dark:hover:bg-gray-700'" 
-                           class="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 transition select-none">
-                        <input type="checkbox" :disabled="isCurrentWeekLocked()" x-model="getMyScheduleObj()[day.key].ca3" @change="saveToStorage()" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 dark:bg-gray-700 dark:border-gray-600">
-                        <span class="text-xs font-semibold text-gray-700 dark:text-gray-300">Ca 3</span>
-                    </label>
-                </div>
-            </div>
-        </template>
-    </div>
-</div>
-            
+               
             <!-- THANH ĐIỀU HƯỚNG TUẦN & TRẠNG THÁI -->
             <div x-show="currentView !== 'monthly'" class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-4 transition-colors">
                 <div class="flex items-center gap-3">
