@@ -260,64 +260,8 @@
                     </div>
                 </div>
 
-                <!-- 1. GIAO DIỆN MOBILE CARD VIEW (Tối ưu thiết bị di động: block md:hidden) -->
-                <div class="block md:hidden space-y-4">
-                    <template x-for="emp in filteredEmployees" :key="emp.id">
-                        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 space-y-3">
-                            
-                            <!-- Thông tin nhân viên & Tổng số ca -->
-                            <div class="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
-                                <div class="flex items-center gap-2">
-                                    <h3 class="font-bold text-gray-800 dark:text-white text-base" x-text="emp.name"></h3>
-                                    <button @click="deleteEmployee(emp.id, emp.name)" class="text-rose-400 hover:text-rose-600 p-1" title="Xóa nhân viên">
-                                        <i class="fa-solid fa-trash-can text-xs"></i>
-                                    </button>
-                                </div>
-                                <span class="bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 text-xs font-bold px-2.5 py-1 rounded-full">
-                                    Tổng: <span x-text="getEmployeeTotalShifts(emp.name)"></span> ca
-                                </span>
-                            </div>
-
-                            <!-- Danh sách ca trực theo từng ngày trong tuần -->
-                            <div class="grid grid-cols-1 gap-2 text-sm">
-                                <template x-for="(day, index) in weekDays" :key="index">
-                                    <div class="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-                                        <!-- Thứ & Ngày -->
-                                        <div class="flex items-center gap-2">
-                                            <span class="font-semibold text-xs text-gray-700 dark:text-gray-300 w-12" x-text="day.shortName"></span>
-                                            <span class="text-[11px] text-gray-400" x-text="day.dateStr"></span>
-                                        </div>
-
-                                        <!-- Ca trực / Nút sửa ca -->
-                                        <div class="flex items-center gap-2">
-                                            <template x-if="getShift(emp.name, day.dateKey)">
-                                                <span class="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 text-xs font-semibold px-2.5 py-1 rounded-md flex items-center gap-1">
-                                                    <i class="fa-solid fa-clock text-[10px]"></i>
-                                                    <span x-text="getShift(emp.name, day.dateKey)"></span>
-                                                </span>
-                                            </template>
-
-                                            <template x-if="!getShift(emp.name, day.dateKey)">
-                                                <span class="text-xs text-gray-400 italic px-2 py-0.5">Nghỉ</span>
-                                            </template>
-
-                                            <!-- Nút sửa lịch Admin -->
-                                            <template x-if="role === 'admin' && !isCurrentWeekLocked()">
-                                                <button @click="openEditShiftModal(emp.name, day.dateKey)" class="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-1">
-                                                    <i class="fa-solid fa-pen text-xs"></i>
-                                                </button>
-                                            </template>
-                                        </div>
-                                    </div>
-                                </template>
-                            </div>
-
-                        </div>
-                    </template>
-                </div>
-
-                <!-- 2. GIAO DIỆN DESKTOP TABLE VIEW (Chỉ hiển thị trên màn hình máy tính: hidden md:block) -->
-                <div class="hidden md:block bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-x-auto">
+                <!-- BẢNG LỊCH TUẦN -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
